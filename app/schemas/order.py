@@ -9,7 +9,7 @@ from app.models.order import OrderStatus
 
 class OrderItemCreate(BaseModel):
     product_id: uuid.UUID
-    quantity: int = Field(gt=0)
+    quantity: Decimal = Field(gt=0, decimal_places=3)
 
 
 class OrderCreate(BaseModel):
@@ -24,7 +24,7 @@ class OrderItemRead(BaseModel):
 
     id: uuid.UUID
     product_id: uuid.UUID
-    quantity: int
+    quantity: Decimal
     price_at_purchase: Decimal
 
 
