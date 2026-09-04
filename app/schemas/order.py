@@ -33,6 +33,7 @@ class OrderRead(BaseModel):
 
     id: uuid.UUID
     store_id: uuid.UUID
+    customer_id: uuid.UUID
     customer_name: str
     customer_phone: str
     customer_address: str

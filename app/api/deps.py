@@ -7,14 +7,12 @@ from app.crud.crud_store import get_store_by_slug
 from app.crud.crud_user import get_user_by_email
 from app.db.session import get_db
 from app.models.store import Store
-from app.models.user import StoreOwner
+from app.models.user import User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
-async def get_current_owner(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
-) -> StoreOwner:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -29,6 +27,24 @@ async def get_current_owner(
     return user
 
 
+async def get_current_store_owner(user: User = Depends(get_current_user)) -> User:
+    if user.role != UserRole.STORE_OWNER:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Store owner account required")
+    return user
+
+
+async def get_current_customer(user: User = Depends(get_current_user)) -> User:
+    if user.role != UserRole.CUSTOMER:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Customer account required")
+    return user
+
+
+async def get_current_admin(user: User = Depends(get_current_user)) -> User:
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin account required")
+    return user
+
+
 async def get_current_store(slug: str, db: AsyncSession = Depends(get_db)) -> Store:
     store = await get_store_by_slug(db, slug)
     if store is None:
@@ -38,8 +54,10 @@ async def get_current_store(slug: str, db: AsyncSession = Depends(get_db)) -> St
 
 async def verify_store_owner(
     store: Store = Depends(get_current_store),
-    owner: StoreOwner = Depends(get_current_owner),
+    user: User = Depends(get_current_user),
 ) -> Store:
-    if store.owner_id != owner.id:
+    if user.role == UserRole.ADMIN:
+        return store
+    if store.owner_id != user.id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "You do not own this store")
     return store

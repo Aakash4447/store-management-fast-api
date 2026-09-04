@@ -3,10 +3,11 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_store, verify_store_owner
+from app.api.deps import get_current_customer, get_current_store, verify_store_owner
 from app.crud.crud_order import create_order, get_order, list_orders, update_order_status
 from app.db.session import get_db
 from app.models.store import Store
+from app.models.user import User
 from app.schemas.order import OrderCreate, OrderRead, OrderStatusUpdate
 
 router = APIRouter(prefix="/stores/{slug}/orders", tags=["orders"])
@@ -14,9 +15,12 @@ router = APIRouter(prefix="/stores/{slug}/orders", tags=["orders"])
 
 @router.post("", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 async def place_order(
-    order_in: OrderCreate, store: Store = Depends(get_current_store), db: AsyncSession = Depends(get_db)
+    order_in: OrderCreate,
+    store: Store = Depends(get_current_store),
+    customer: User = Depends(get_current_customer),
+    db: AsyncSession = Depends(get_db),
 ):
-    return await create_order(db, store.id, order_in)
+    return await create_order(db, store.id, customer.id, order_in)
 
 
 @router.get("", response_model=list[OrderRead])

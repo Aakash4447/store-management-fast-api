@@ -30,7 +30,19 @@ async def get_order(db: AsyncSession, store_id: uuid.UUID, order_id: uuid.UUID) 
     return result.scalar_one_or_none()
 
 
-async def create_order(db: AsyncSession, store_id: uuid.UUID, order_in: OrderCreate) -> Order:
+async def list_orders_by_customer(db: AsyncSession, customer_id: uuid.UUID) -> list[Order]:
+    result = await db.execute(
+        select(Order)
+        .where(Order.customer_id == customer_id)
+        .options(selectinload(Order.items))
+        .order_by(Order.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def create_order(
+    db: AsyncSession, store_id: uuid.UUID, customer_id: uuid.UUID, order_in: OrderCreate
+) -> Order:
     """Places an order, decrementing stock atomically under row locks to prevent overselling
     when multiple customers order the same product concurrently."""
     total_amount = Decimal("0")
@@ -62,6 +74,7 @@ async def create_order(db: AsyncSession, store_id: uuid.UUID, order_in: OrderCre
 
     order = Order(
         store_id=store_id,
+        customer_id=customer_id,
         customer_name=order_in.customer_name,
         customer_phone=order_in.customer_phone,
         customer_address=order_in.customer_address,

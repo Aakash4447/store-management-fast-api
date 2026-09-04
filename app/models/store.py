@@ -15,10 +15,10 @@ class Store(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     owner_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("store_owners.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    owner: Mapped["StoreOwner"] = relationship(back_populates="stores")
+    owner: Mapped["User"] = relationship(back_populates="stores")
     products: Mapped[list["Product"]] = relationship(back_populates="store", cascade="all, delete-orphan")
     orders: Mapped[list["Order"]] = relationship(back_populates="store", cascade="all, delete-orphan")

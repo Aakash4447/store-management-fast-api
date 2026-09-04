@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+from app.models.user import UserRole
+
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -14,9 +16,11 @@ class UserRead(BaseModel):
 
     id: uuid.UUID
     email: EmailStr
+    role: UserRole
     created_at: datetime
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    role: UserRole
